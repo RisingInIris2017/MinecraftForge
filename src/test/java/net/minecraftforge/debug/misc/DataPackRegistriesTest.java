@@ -47,10 +47,10 @@ import net.minecraftforge.registries.RegistryBuilder;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * <p>This test class shows an example of how to register unsynced and synced datapack registries,
- * and how to use a dataprovider to generate json files for them.
- * It also verifies that data and tags are loaded and synced correctly.
- * Data is loaded from the following folders in test resources:</p>
+ * <p> 该测试类展示了一个注册同步或未同步的数据包注册项的例子，
+ * 以及如何使用一个 DataProvider 来生成它们所需的 JSON 文件。
+ * 同时也完成了对数据和标签是否正确加载和同步的校验。
+ * 数据是从下列测试资源位置载入的：</p>
  * <ul>
  * <li><code>data/data_pack_registries_test/data_pack_registries_test/unsyncable/test.json</code></li>
  * <li><code>data/data_pack_registries_test/tags/data_pack_registries_test/unsyncable/test.json</code></li>
@@ -76,21 +76,21 @@ public class DataPackRegistriesTest
         final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         final IEventBus forgeBus = MinecraftForge.EVENT_BUS;
         
-        // Deferred Registers can be created for datapack registries in static init or mod constructor.
-        // (We'll do it in mod constructor, as when doing the ENABLED check it's less verbose than static init.)
-        // As with static registries, any mod can make a Deferred Register for a given datapack registry,
-        // but only one mod can register the internal registry with makeRegistry.
+        // 延迟注册器 (Deferred Registers) 可以在静态初始化或模组构造函数中创建，用于注册数据包注册项。
+        // （考虑到做是否启用的检查时，模组构造函数的写法比静态初始化的写法简单，我们采用前者。)
+        // 借助静态注册项，任何模组都可以给某个给定的数据包注册项作延迟注册（Deferred Register），
+        // 但只有一个模组可以使用 makeRegistry 方法注册内部注册项。
         final DeferredRegister<Unsyncable> unsyncables = DeferredRegister.create(Unsyncable.REGISTRY_KEY, MODID);
         final DeferredRegister<Syncable> syncables = DeferredRegister.create(Syncable.REGISTRY_KEY, MODID);
         
-        // RegistryBuilder#dataPackRegistry marks the registry as a datapack registry rather than a static registry.
+        // RegistryBuilder#dataPackRegistry 标志着该注册项是一个数据包注册项，而非一个静态注册项。
         unsyncables.makeRegistry(Unsyncable.class,
             () -> new RegistryBuilder<Unsyncable>().disableSaving().dataPackRegistry(Unsyncable.DIRECT_CODEC));
-        // The overload of #dataPackRegistry that takes a second codec marks the datapack registry as syncable.
+        // #dataPackRegistry 被重载为需要第二个编解码器参数的形式，这标志着数据包注册表是可同步的。
         syncables.makeRegistry(Syncable.class,
             () -> new RegistryBuilder<Syncable>().disableSaving().dataPackRegistry(Syncable.DIRECT_CODEC, Syncable.DIRECT_CODEC));
         
-        // Datapack registry elements can be datagenerated, but they must be registered as builtin objects first.
+        // 数据包注册项的元素可以由 datagen 方式生成，但它们必须先被注册为内置对象。
         this.datagenTestObject = unsyncables.register("datagen_test", () -> new Unsyncable("Datagen Success"));
         
         unsyncables.register(modBus);
@@ -109,9 +109,9 @@ public class DataPackRegistriesTest
     {
         if (!event.includeServer())
             return;
-        // Example of how to datagen datapack registry objects.
-        // Objects to be datagenerated must be registered (e.g. via DeferredRegister above).
-        // This outputs to data/data_pack_registries_test/data_pack_registries_test/unsyncable/datagen_test.json
+        // 使用 datagen 生成数据包注册项对象的示例。
+        // 要被 datagen 生成的对象，必须先被注册，例如可以通过上面的 DeferredRegister
+        // 这会输出到 data/data_pack_registries_test/data_pack_registries_test/unsyncable/datagen_test.json 文件中。
         final DataGenerator generator = event.getGenerator();
         final Path outputFolder = generator.getOutputFolder();
         final RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, RegistryAccess.BUILTIN.get());
@@ -151,7 +151,7 @@ public class DataPackRegistriesTest
     
     private void onServerStarting(final ServerStartingEvent event)
     {
-        // Assert existence of json objects and tags.
+        // 断言 JSON 对象和标签存在。
         final RegistryAccess registries = event.getServer().registryAccess();
         final Registry<Unsyncable> registry = registries.registryOrThrow(Unsyncable.REGISTRY_KEY);
         final ResourceKey<Unsyncable> key = ResourceKey.create(Unsyncable.REGISTRY_KEY, TEST_RL);
@@ -175,17 +175,17 @@ public class DataPackRegistriesTest
         
         private static void onClientTagsUpdated(final TagsUpdatedEvent event)
         {
-            // We want to check whether tags have been synced after the player logs in.
-            // Tags are synced late in the login process and many relevant events fire before tags are synced.
-            // TagsUpdatedEvent has the correct timing, but fires on both server and render thread,
-            // so we need to make sure we're on the render thread.
+            // 我们希望检查标签是否已经在玩家登录后同步。
+            // 标签在登录流程的末尾才同步，而许多有关的事件则在标签同步之前触发。
+            // TagsUpdatedEvent 事件有正确的触发时机，但它同时在服务线程 (server) 和渲染线程 (render thread) 触发，
+            // 所以我们需要确保我们处在渲染线程。
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || EffectiveSide.get().isServer())
                 return;
 
-            // Assert existence of synced objects and tags. The TagsUpdatedEvent has its own RegistryAccess,
-            // but we should check the player's connection's RegistryAccess as that's where the client's copy
-            // lives during game runtime, and where mods should be querying on the client in most cases.
+            // 断言被同步的对象和标签存在。TagsUpdatedEvent 事件有专属的 RegistryAccess,
+            // 但我们应当检查玩家的连接的 RegistryAccess，因为它是客户端保留的拷贝在整个游戏运行期间所存放的位置，
+            // 和大多数情况下模组查询客户端时应当查询的位置。
             RegistryAccess registries = player.connection.registryAccess();
             final Registry<Syncable> registry = registries.registryOrThrow(Syncable.REGISTRY_KEY);
             final ResourceKey<Syncable> key = ResourceKey.create(Syncable.REGISTRY_KEY, TEST_RL);
