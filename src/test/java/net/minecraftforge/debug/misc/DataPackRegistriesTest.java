@@ -47,7 +47,7 @@ import net.minecraftforge.registries.RegistryBuilder;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * <p> 该测试类展示了一个注册同步或未同步的数据包注册项的例子，
+ * <p> 该测试类展示了一个注册同步/非同步数据包注册表的例子，
  * 以及如何使用一个 DataProvider 来生成它们所需的 JSON 文件。
  * 同时也完成了对数据和标签是否正确加载和同步的校验。
  * 数据是从下列测试资源位置载入的：</p>
@@ -76,21 +76,21 @@ public class DataPackRegistriesTest
         final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         final IEventBus forgeBus = MinecraftForge.EVENT_BUS;
         
-        // 延迟注册器 (Deferred Registers) 可以在静态初始化或模组构造函数中创建，用于注册数据包注册项。
+        // 延迟注册器 (Deferred Registers) 可以在静态初始化或模组构造函数中创建，用于注册数据包注册表。
         // （考虑到做是否启用的检查时，模组构造函数的写法比静态初始化的写法简单，我们采用前者。)
-        // 借助静态注册项，任何模组都可以给某个给定的数据包注册项作延迟注册（Deferred Register），
-        // 但只有一个模组可以使用 makeRegistry 方法注册内部注册项。
+        // 借助静态注册表，任何模组都可以给某个给定的数据包注册表作延迟注册（Deferred Register），
+        // 但只有一个模组可以使用 makeRegistry 方法注册内部注册表。
         final DeferredRegister<Unsyncable> unsyncables = DeferredRegister.create(Unsyncable.REGISTRY_KEY, MODID);
         final DeferredRegister<Syncable> syncables = DeferredRegister.create(Syncable.REGISTRY_KEY, MODID);
         
-        // RegistryBuilder#dataPackRegistry 标志着该注册项是一个数据包注册项，而非一个静态注册项。
+        // RegistryBuilder#dataPackRegistry 标志着该注册表是一个数据包注册表，而非一个静态注册表。
         unsyncables.makeRegistry(Unsyncable.class,
             () -> new RegistryBuilder<Unsyncable>().disableSaving().dataPackRegistry(Unsyncable.DIRECT_CODEC));
         // #dataPackRegistry 被重载为需要第二个编解码器参数的形式，这标志着数据包注册表是可同步的。
         syncables.makeRegistry(Syncable.class,
             () -> new RegistryBuilder<Syncable>().disableSaving().dataPackRegistry(Syncable.DIRECT_CODEC, Syncable.DIRECT_CODEC));
         
-        // 数据包注册项的元素可以由 datagen 方式生成，但它们必须先被注册为内置对象。
+        // 数据包注册表的元素可以由 datagen 方式生成，但它们必须先被注册为内置对象。
         this.datagenTestObject = unsyncables.register("datagen_test", () -> new Unsyncable("Datagen Success"));
         
         unsyncables.register(modBus);
@@ -109,7 +109,7 @@ public class DataPackRegistriesTest
     {
         if (!event.includeServer())
             return;
-        // 使用 datagen 生成数据包注册项对象的示例。
+        // 使用 datagen 生成数据包注册表对象的示例。
         // 要被 datagen 生成的对象，必须先被注册，例如可以通过上面的 DeferredRegister
         // 这会输出到 data/data_pack_registries_test/data_pack_registries_test/unsyncable/datagen_test.json 文件中。
         final DataGenerator generator = event.getGenerator();
